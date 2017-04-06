@@ -2,9 +2,8 @@
 #include <SoftwareSerial.h>
 #include <Arduino.h>
 
-SoftwareSerial mySerial(2, 3);//Carrinho
-//SoftwareSerial mySerial(6, 5); 
-Servo servo,esc;  
+SoftwareSerial mySerial(2, 3)
+Servo servo,esc;
 
 String inString = "";
 
@@ -18,11 +17,7 @@ float r1 = 47000;
 float r2 = 10000;
 
 int voltcheck = 0;
-/*
-double b = 85; //Braking
-double n = 90; //Neutral
-double m = 120; //Accelerate
-*/
+
 void setup() {
   pinMode(13, OUTPUT);
   servo.attach(6);//Carrinho
@@ -39,52 +34,25 @@ void loop() {
     int inChar = mySerial.read();
     
     if (isDigit(inChar)) {
-      /*
-      Serial.print("inChar");
-      Serial.println(inChar);
-            */
-      
-      
-      inString += (char)inChar;
-      
-      /*
-      Serial.print("inChar ");
-      Serial.println(inChar);
-      Serial.print("inString");
-      Serial.println(inString); 
-      */
+      inString += (char)inChar; 
     }
     
     if (inChar == 'n'){
-            /*
-      Serial.println(inChar);
-      Serial.println(inString);
-      */
       int n = inString.toInt();
-       
       if (n <= 180){
-        Serial.print("PULSO DO esc = ");
-        Serial.println(n);
-        servo.write(n); 
-        
+        //Serial.println(n);
+        servo.write(n);        
       }
       inString = "";
     }
     if (inChar == 'r') {
-      //Serial.println(inChar);
-      //Serial.println(inString);
-      
       int x = inString.toInt();
-       
       if (x <= 180){
-        Serial.print("PULSO DO MOTOR = ");
-        Serial.println(x);
-        esc.write(x); 
-        
+        //Serial.println(x);
+        esc.write(x);      
       }
       inString = "";
-    }
-    
+    }    
     if (inChar == 'm') {
       if (voltcheck > 10){
       //getv();
@@ -102,7 +70,6 @@ void loop() {
     //delay(30);
   }
 }
-
 static void getv() {
   float v = (analogRead(5) * vPow) / 1023.0;
     float v2 = v / (r2 / (r1 + r2));
