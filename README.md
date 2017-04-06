@@ -1,2 +1,2 @@
-# RC_Controller_Bluetooth_Android_Arduino
+# RC Controller Bluetooth Android Arduino
 A Android APP to control arduino based rc car using bluetooth module.
