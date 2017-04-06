@@ -1,4 +1,7 @@
 # Português 
-[Leia-me em portugues](README_Porgugues.md)
+# App Controle Bluetooth para RC
+[Link para o Leia-me em portugues](README_Porgugues.md)
+
 # English
-[Readme in English](README_English.md)
+# RC Controller Bluetooth Android Arduino
+[Link Readme in English](README_English.md)
