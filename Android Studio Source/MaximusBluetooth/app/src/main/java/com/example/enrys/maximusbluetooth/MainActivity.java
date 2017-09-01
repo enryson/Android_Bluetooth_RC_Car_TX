@@ -19,27 +19,31 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
+import static android.R.attr.progress;
 import static android.R.attr.value;
 
 public class MainActivity extends AppCompatActivity {
-    Button btnConect, buttonU,buttonD,buttonL,buttonR;
+    Button btnConect;
     SeekBar  SeekBar1,SeekBar2;
     ConnectedThread connectedThread;
-
+    TextView textView;
     InputStream mmInStream = null;
     OutputStream mmOutStream = null;
     BluetoothAdapter mBluetoothAdapter = null;
     BluetoothDevice mBluetoothDevice = null;
     BluetoothSocket mBluetoothSocket = null;
     int center = 60;
-
+    public int valor1,valor2;
 
     boolean conection = false;
     private Vibrator vibrator;
@@ -59,12 +63,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         btnConect = (Button) findViewById(R.id.btnConect);
-        buttonU = (Button) findViewById(R.id.buttonU);
-        buttonD = (Button) findViewById(R.id.buttonD);
 
         SeekBar1 = (SeekBar) findViewById(R.id.SeekBar1);
         SeekBar1.setMax(TransportMediator.KEYCODE_MEDIA_RECORD);
         SeekBar1.setProgress(center);
+        textView = (TextView) findViewById(R.id.textView);
+
 
         SeekBar2 = (SeekBar) findViewById(R.id.SeekBar2);
         SeekBar2.setMax(TransportMediator.KEYCODE_MEDIA_RECORD);
@@ -109,9 +113,10 @@ public class MainActivity extends AppCompatActivity {
                 Vibrator v = (Vibrator)getSystemService(MainActivity.VIBRATOR_SERVICE);
                 v.vibrate((progress/10)-3);
                 try {
-                    connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
+                    valor2 = (progress + 1)+20;
+                    //connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
                 }catch (Exception e) {
-                    connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
+                    //connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
                 }
             }
             @Override
@@ -120,7 +125,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 seekBar.setProgress(center);
-                connectedThread.write(new StringBuilder(String.valueOf((110))).append("n").toString());
+                try {
+                    valor2 = (progress + 1)+20;
+                    //connectedThread.write(new StringBuilder(String.valueOf((110))).append("n").toString());
+
+                }catch (Exception e ){
+
+                }
+
             }
         });
 
@@ -130,9 +142,10 @@ public class MainActivity extends AppCompatActivity {
                 Vibrator v = (Vibrator)getSystemService(MainActivity.VIBRATOR_SERVICE);
                 v.vibrate((progress/10)-3);
                 try {
-                    connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
+                    valor1 = (progress + 1)+20;
+                    //connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
                 }catch (Exception e) {
-                    connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
+                    //connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
                 }
             }
             @Override
@@ -141,9 +154,36 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 seekBar.setProgress(70);
-                connectedThread.write(new StringBuilder(String.valueOf((90))).append("r").toString());
+                try {
+                    valor1 = (progress + 1)+20;
+                }catch (Exception e ){
+
+                }
+
+                //connectedThread.write(new StringBuilder(String.valueOf((90))).append("r").toString());
             }
         });
+
+
+
+        final Handler handler2 = new Handler();
+        Timer timer2 = new Timer();
+        TimerTask doAsynchronousTask2 = new TimerTask() {
+            @Override
+            public void run() {
+                handler2.post(new Runnable() {
+                    public void run() {
+                        try {
+                            textView.setText(valor1);
+                            connectedThread.write(new StringBuilder(String.valueOf(valor1)).append("n").toString());
+                            //connectedThread.write(new StringBuilder(String.valueOf(value)).append("n").toString());
+                        } catch (Exception e) {
+                        }
+                    }
+                });
+            }
+        };
+        timer2.schedule(doAsynchronousTask2, 0, 1);
 
     }
         @Override

@@ -13,28 +13,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=""
+        android:text="Pulso"
         android:id="@+id/textView" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/textView2"
-        android:layout_marginLeft="34dp"
-        android:layout_marginStart="34dp"
-        android:id="@+id/buttonU"
-        tools:ignore="UnknownId"
-        android:padding="50dip"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignLeft="@+id/buttonU"
-        android:layout_alignStart="@+id/buttonU"
-        android:id="@+id/buttonD"
-        android:padding="50dip" />
 
     <Button
         android:text="Connect"
@@ -55,17 +35,16 @@
         android:layout_width="500px"
         android:layout_height="wrap_content"
         android:rotation="90"
-        android:layout_centerVertical="true"
-        android:layout_alignLeft="@+id/buttonU"
-        android:layout_alignStart="@+id/buttonU" />
+        android:layout_centerVertical="true"/>
 
     <SeekBar
         android:id="@+id/SeekBar1"
         android:layout_width="500px"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_alignTop="@+id/buttonD"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp" />
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="20dp" />
 </RelativeLayout>
