@@ -2,6 +2,8 @@ package com.example.enrys.maximusbluetooth;
 
 import android.annotation.TargetApi;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.graphics.PorterDuff;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -18,6 +20,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,54 +28,86 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
-import static android.R.attr.progress;
 import static android.R.attr.value;
 
 public class MainActivity extends AppCompatActivity {
-    Button btnConect;
-    SeekBar  SeekBar1,SeekBar2;
+    Button btnConect, buttonU,buttonD,buttonL,buttonR;
+    SeekBar  SeekBarD,SeekBarA;
+    TextView textkmh;
     ConnectedThread connectedThread;
-    TextView textView;
     InputStream mmInStream = null;
     OutputStream mmOutStream = null;
     BluetoothAdapter mBluetoothAdapter = null;
     BluetoothDevice mBluetoothDevice = null;
     BluetoothSocket mBluetoothSocket = null;
     int center = 60;
-    public int valor1,valor2;
 
     boolean conection = false;
-    private Vibrator vibrator;
     public static int oldvalue;
     private static final String TAG = "-->";
     private static final int BT_ACTIVATE_REQUEST = 1;
     private static final int BT_CONNECT_REQUEST = 2;
+    private static final int MESSAGE_READ = 3;
+    private boolean registered=false;
+    StringBuilder bluetoothdata = new StringBuilder();
     private static String MAC = null;
-    private Handler mHandler = new Handler();
-    private static final String MESSAGE_READ = null;
+    private Handler mHandler;
+
+
+
 
     UUID My_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
 
+
+    private void SendServo(final int progesso)
+    {
+        //Velocimetro.setText(v);
+        mHandler.post(new Runnable() {
+            public void run(){
+                String v = String.valueOf((progesso)+40);
+                try
+                {
+                    connectedThread.write(new StringBuilder(v).append("n").toString());
+                    oldvalue = progesso+1;
+                } catch (Exception e){}
+            }
+        });
+    }
+    private void SendESC(final int progesso)
+    {
+        //Velocimetro.setText(v);
+        mHandler.post(new Runnable() {
+            public void run(){
+                String v = String.valueOf((progesso)+40);
+                try
+                {
+                    connectedThread.write(new StringBuilder(v).append("r").toString());
+                    oldvalue = progesso+1;
+                } catch (Exception e){}
+            }
+        });
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         btnConect = (Button) findViewById(R.id.btnConect);
 
-        SeekBar1 = (SeekBar) findViewById(R.id.SeekBar1);
-        SeekBar1.setMax(TransportMediator.KEYCODE_MEDIA_RECORD);
-        SeekBar1.setProgress(center);
-        textView = (TextView) findViewById(R.id.textView);
+        SeekBarD = (SeekBar) findViewById(R.id.SeekBarD);
+        SeekBarD.setMax(TransportMediator.KEYCODE_MEDIA_RECORD);
+        SeekBarD.setProgress(center);
+
+        SeekBarA = (SeekBar) findViewById(R.id.SeekBarA);
+        SeekBarA.setMax(TransportMediator.KEYCODE_MEDIA_RECORD);
+        SeekBarA.setProgress(center);
 
 
-        SeekBar2 = (SeekBar) findViewById(R.id.SeekBar2);
-        SeekBar2.setMax(TransportMediator.KEYCODE_MEDIA_RECORD);
-        SeekBar2.setProgress(center);
+        textkmh = (TextView) findViewById(R.id.textkmh);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -82,6 +117,45 @@ public class MainActivity extends AppCompatActivity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, BT_ACTIVATE_REQUEST);
         }
+
+        mHandler = new Handler() {
+            public void handleMessage(android.os.Message msg) {
+
+                if (msg.what == MESSAGE_READ) {                                     //if message is what we want
+                    String readMessage = (String) msg.obj;                                                                // msg.arg1 = bytes from connect thread
+                    bluetoothdata.append(readMessage);                                      //keep appending to string until ~
+                    int endOfLineIndex = bluetoothdata.indexOf("~");                    // determine the end-of-line
+                    if (endOfLineIndex > 0) {                                           // make sure there data before ~
+                        String dataInPrint = bluetoothdata.substring(0, 4);    // extract string
+
+
+                        double volt2 = Double.parseDouble(dataInPrint);
+                        double voltfinal = volt2/100;
+                        double numberbase = ((volt2)-1900)*10/36 ;
+                        int calc = (int) numberbase;
+                        //int voltagem = Integer.valueOf(volt2);
+
+                        textkmh.setText((voltfinal)+"V");
+                        progressBar.setProgress(calc);
+
+                        int dataLength = dataInPrint.length();                          //get length of data received
+                        //txtStringLength.setText("String Length = " + String.valueOf(dataLength));
+                        if (bluetoothdata.charAt(0) == '#')                             //if it starts with # we know it is what we are looking for
+                        {
+                            String volt = bluetoothdata.substring(1, dataLength);
+                            //int voltagem = Integer.valueOf(volt);
+                            //progressBar2.setProgress(voltagem*100);
+                            //textkmh.setText(volt+"v");
+                        }
+                        bluetoothdata.delete(0, bluetoothdata.length());                    //clear all string data
+                        // readMessage =" ";
+                        dataInPrint = " ";
+                    }
+                }
+            }
+        };
+
+
         btnConect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,83 +181,66 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        SeekBar1.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        SeekBarD.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress , boolean fromUser) {
                 Vibrator v = (Vibrator)getSystemService(MainActivity.VIBRATOR_SERVICE);
                 v.vibrate((progress/10)-3);
-                try {
-                    valor2 = (progress + 1)+20;
-                    //connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
-                }catch (Exception e) {
-                    //connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
-                }
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                seekBar.setProgress(center);
-                try {
-                    valor2 = (progress + 1)+20;
-                    //connectedThread.write(new StringBuilder(String.valueOf((110))).append("n").toString());
-
-                }catch (Exception e ){
-
-                }
-
-            }
-        });
-
-        SeekBar2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress , boolean fromUser) {
-                Vibrator v = (Vibrator)getSystemService(MainActivity.VIBRATOR_SERVICE);
-                v.vibrate((progress/10)-3);
-                try {
-                    valor1 = (progress + 1)+20;
-                    //connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
-                }catch (Exception e) {
-                    //connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
-                }
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                seekBar.setProgress(70);
-                try {
-                    valor1 = (progress + 1)+20;
-                }catch (Exception e ){
-
-                }
-
-                //connectedThread.write(new StringBuilder(String.valueOf((90))).append("r").toString());
-            }
-        });
-
-
-
-        final Handler handler2 = new Handler();
-        Timer timer2 = new Timer();
-        TimerTask doAsynchronousTask2 = new TimerTask() {
-            @Override
-            public void run() {
-                handler2.post(new Runnable() {
-                    public void run() {
-                        try {
-                            textView.setText(valor1);
-                            connectedThread.write(new StringBuilder(String.valueOf(valor1)).append("n").toString());
-                            //connectedThread.write(new StringBuilder(String.valueOf(value)).append("n").toString());
-                        } catch (Exception e) {
-                        }
+                SendServo(progress);
+                /*if (conection) {
+                    try {
+                        connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
+                    }catch (Exception e) {
+                        connectedThread.write(new StringBuilder(String.valueOf((progress * 1) + 60)).append("n").toString());
                     }
-                });
+                }*/
             }
-        };
-        timer2.schedule(doAsynchronousTask2, 0, 1);
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                seekBar.setProgress(65);
+                /*
+                if (conection) {
+                    try {
+                        connectedThread.write(new StringBuilder(String.valueOf((110))).append("n").toString());
+                    }catch (Exception e) {
+                    }
+                }*/
+
+            }
+        });
+
+        SeekBarA.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress , boolean fromUser) {
+                Vibrator v = (Vibrator)getSystemService(MainActivity.VIBRATOR_SERVICE);
+                v.vibrate((progress/10)-3);
+                SendESC(progress);
+                /*if (conection) {
+                    try {
+                        connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
+                    }catch (Exception e) {
+                        connectedThread.write(new StringBuilder(String.valueOf((progress + 1)+20)).append("r").toString());
+                    }
+                }*/
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                seekBar.setProgress(55);
+                /*if (conection) {
+                    try {
+                        connectedThread.write(new StringBuilder(String.valueOf((90))).append("r").toString());
+                    }catch (Exception e) {
+                    }
+                }*/
+
+            }
+        });
 
     }
         @Override
@@ -220,34 +277,93 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        private class ConnectedThread extends Thread {
-            private final BluetoothSocket mmSocket;
-            private final InputStream mmInStream;
-            private final OutputStream mmOutStream;
+    private class ConnectedThread extends Thread {
+        private final BluetoothSocket mmSocket;
+        private final InputStream mmInStream;
+        private final OutputStream mmOutStream;
 
-            public ConnectedThread(BluetoothSocket socket) {
-                mmSocket = socket;
-                InputStream tmpIn = null;
-                OutputStream tmpOut = null;
-                try {
-                    tmpIn = socket.getInputStream();
-                    tmpOut = socket.getOutputStream();
-                } catch (IOException e) { }
+        public ConnectedThread(BluetoothSocket socket) {
+            mmSocket = socket;
+            InputStream tmpIn = null;
+            OutputStream tmpOut = null;
 
-                mmInStream = tmpIn;
-                mmOutStream = tmpOut;
-            }
-            public void run() {
-                byte[] buffer = new byte[1024];
-                int bytes;
-            }
-            public void write(String outputwrite ) {
-                byte[] msgBuffer = outputwrite.getBytes();
-                try {
-                    mmOutStream.write(msgBuffer);
-                } catch (IOException e) { }
-            }
+            // Get the input and output streams, using temp objects because
+            // member streams are final
+            try {
+                tmpIn = socket.getInputStream();
+                tmpOut = socket.getOutputStream();
+            } catch (IOException e) { }
 
+            mmInStream = tmpIn;
+            mmOutStream = tmpOut;
         }
+
+        public void run() {
+
+            byte[] buffer = new byte[1024];  // buffer store for the stream
+            int bytes; // bytes returned from read()
+
+
+            // Keep listening to the InputStream until an exception occurs
+            while (true) {
+                try {
+                    // Read from the InputStream
+                    bytes = mmInStream.read(buffer);
+
+                    String btdata = new String(buffer, 0 , bytes);
+
+                    // Send the obtained bytes to the UI activity
+                    mHandler.obtainMessage(MESSAGE_READ, bytes, -1, btdata).sendToTarget();
+                } catch (IOException e) {
+                    break;
+                }
+            }
+        }
+
+        /* Call this from the main activity to send data to the remote device */
+        public void write(String outputwrite ) {
+            byte[] msgBuffer = outputwrite.getBytes();
+            try {
+                mmOutStream.write(msgBuffer);
+            } catch (IOException e) { }
+        }
+
+        /* Call this from the main activity to shutdown the connection
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) { }
+        }*/
+        private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String action = intent.getAction();
+
+                if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                    final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                    Intent intent1 = new Intent(MainActivity.this, MainActivity.class);
+
+                    switch (state) {
+                        case BluetoothAdapter.STATE_OFF:
+                            if(registered) {
+                                unregisterReceiver(mReceiver);
+                                registered=false;
+                            }
+                            startActivity(intent1);
+                            finish();
+                            break;
+                        case BluetoothAdapter.STATE_TURNING_OFF:
+                            if(registered) {
+                                unregisterReceiver(mReceiver);
+                                registered=false;
+                            }
+                            startActivity(intent1);
+                            finish();
+                            break;
+                    }
+                }
+            }
+        };
+    }
 
 }

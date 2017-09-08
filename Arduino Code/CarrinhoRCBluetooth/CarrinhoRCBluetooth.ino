@@ -1,10 +1,11 @@
-//Carrinho
+
 #include <Servo.h>
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
 #include <Arduino.h>
 
-SoftwareSerial mySerial(2, 3);
-Servo myservo,esc;  
+//SoftwareSerial mySerial(2, 3);
+Servo myservo,esc;
+
 //string
 String inString = "";
 
@@ -23,7 +24,6 @@ void setup() {
   pinMode(13, OUTPUT);
   myservo.attach(6);//Carrinho
   esc.attach(5);
-  mySerial.begin(9600);
   digitalWrite(13, LOW);
   Serial.begin(9600);
   myservo.write(90);
@@ -31,8 +31,8 @@ void setup() {
 
 void loop() {
   
-  if (mySerial.available() > 0) {
-    int inChar = mySerial.read();
+  if (Serial.available() > 0) {
+    int inChar = Serial.read();
     
     if (isDigit(inChar)) {
       inString += (char)inChar; 
@@ -41,7 +41,7 @@ void loop() {
     if (inChar == 'n'){
       int n = inString.toInt();
       if (n <= 180){
-        //Serial.println(n);
+        Serial.println(n);
         myservo.write(n);        
       }
       inString = "";
@@ -74,5 +74,5 @@ void loop() {
 static void getv() {
   float v = (analogRead(5) * vPow) / 1023.0;
     float v2 = v / (r2 / (r1 + r2));
-    mySerial.print(v);
+    Serial.print(v);
 }
