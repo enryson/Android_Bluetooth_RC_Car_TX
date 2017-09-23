@@ -13,10 +13,10 @@ unsigned long startTime;
 unsigned long otherTime;
 
 int prev = 150;
-# define analog 2
-float vPow = 1.99;
-float r1 = 100000;
-float r2 = 10000;
+
+float vPow = 5;
+float r1 = 100000.00;
+float r2 = 10000.00;
 
 int voltcheck = 0;
 
@@ -26,12 +26,12 @@ void setup() {
   esc.attach(5);
   digitalWrite(13, LOW);
   Serial.begin(9600);
-  myservo.write(90);
+  myservo.write(120);
   getv();
 }
 
 void loop() {
-  
+  //getv();
   if (Serial.available() > 0) {
     int inChar = Serial.read();
     
@@ -49,7 +49,7 @@ void loop() {
     }
     if (inChar == 'r') {
       int x = inString.toInt();
-      if (x <= 180){
+      if (x <= 170){
         //Serial.println(x);
         esc.write(x);      
       }
@@ -70,10 +70,12 @@ void loop() {
   }
 }
 static void getv() {
-  float v = (analogRead(analog) * vPow) / 1023.0;
-    float v2 = v / (r2 / (r1 + r2));
-    Serial.println("{");
-    Serial.println(v2);
-    Serial.println("v");
+  float v = (analogRead(1) * vPow) / 1023.0;
+  float v2 = v / (r2 / (r1 + r2));
+  Serial.println("{");
+  Serial.println(v2);
+  Serial.println("v");
 }
+
+
 
