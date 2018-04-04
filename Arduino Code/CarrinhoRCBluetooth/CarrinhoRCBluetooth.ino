@@ -1,4 +1,3 @@
-
 #include <Servo.h>
 #include <Arduino.h>
 
@@ -27,7 +26,7 @@ void setup() {
   Serial.begin(9600);
   myservo.write(115);
   getv();
-  tone(buser,262,200); //DO
+  //tone(buser,262,200); //DO
 }
 
 void loop() {
@@ -64,17 +63,8 @@ void loop() {
 static void getv() {
     float v = ((analogRead(1)+40) * vPow) / 1023.0;
     float v2 = v / (r2 / (r1 + r2));
-    if (v2 < 10){      
-      musicTone();
-    }  
     Serial.println("{");
     Serial.println(v2);
     Serial.println("v");
 }
-static void musicTone() {  
-    delay(2000);
-    tone(buser,262,200); //DO
-    delay(200);
-    tone(buser,294,300); //RE
-    delay(200);
-}
+
